@@ -2,23 +2,18 @@ import { NextRequest } from 'next/server'
 import { successResponse, errorResponse, generateSlug, sanitizeInput } from '@/lib/utils'
 import prisma from '@/lib/db'
 
-// GET /api/posts - Get all posts
+// GET /api/blogs - Get all blogs
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
-    const category = searchParams.get('category')
     const search = searchParams.get('search')
 
     const skip = (page - 1) * limit
 
     const where: any = {
       published: true
-    }
-
-    if (category) {
-      where.category = category
     }
 
     if (search) {
@@ -28,8 +23,8 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const [posts, total] = await Promise.all([
-      prisma.post.findMany({
+    const [blogs, total] = await Promise.all([
+      prisma.blog.findMany({
         where,
         include: {
           author: {
@@ -38,18 +33,17 @@ export async function GET(request: NextRequest) {
               name: true,
               email: true
             }
-          },
-          category: true
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit
       }),
-      prisma.post.count({ where })
+      prisma.blog.count({ where })
     ])
 
     return successResponse({
-      posts,
+      blogs,
       pagination: {
         page,
         limit,
@@ -59,16 +53,16 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Get posts error:', error)
+    console.error('Get blogs error:', error)
     return errorResponse('Internal server error', 500)
   }
 }
 
-// POST /api/posts - Create new post
+// POST /api/blogs - Create new blog
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, content, categoryId, published = false } = body
+    const { title, content, published = false } = body
 
     // Get user from headers (set by middleware)
     const userId = request.headers.get('x-user-id')
@@ -84,14 +78,13 @@ export async function POST(request: NextRequest) {
     const sanitizedTitle = sanitizeInput(title)
     const sanitizedContent = sanitizeInput(content)
 
-    const post = await prisma.post.create({
+    const blog = await prisma.blog.create({
       data: {
         title: sanitizedTitle,
         content: sanitizedContent,
         slug,
         published,
-        authorId: userId,
-        categoryId: categoryId || null
+        authorId: userId
       },
       include: {
         author: {
@@ -100,15 +93,14 @@ export async function POST(request: NextRequest) {
             name: true,
             email: true
           }
-        },
-        category: true
+        }
       }
     })
 
-    return successResponse(post, 'Post created successfully')
+    return successResponse(blog, 'Blog created successfully')
 
   } catch (error) {
-    console.error('Create post error:', error)
+    console.error('Create blog error:', error)
     return errorResponse('Internal server error', 500)
   }
 } 

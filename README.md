@@ -71,29 +71,20 @@ npm run db:generate
 ### Authentication
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user info
 
-### Posts
-- `GET /api/posts` - Get all published posts (with pagination, search, filtering)
-- `POST /api/posts` - Create new post (requires authentication)
-- `GET /api/posts/[id]` - Get single post
-- `PUT /api/posts/[id]` - Update post (requires authentication)
-- `DELETE /api/posts/[id]` - Delete post (requires authentication)
-
-### Categories
-- `GET /api/categories` - Get all categories
-- `POST /api/categories` - Create category (requires admin)
-
-### Comments
-- `GET /api/comments?postId=[id]` - Get comments for a post
-- `POST /api/comments` - Create comment (requires authentication)
+### Blogs
+- `GET /api/blogs` - Get all published blogs (with pagination, search)
+- `POST /api/blogs` - Create new blog (requires authentication)
+- `GET /api/blogs/[id]` - Get single blog
+- `PUT /api/blogs/[id]` - Update blog (requires authentication)
+- `DELETE /api/blogs/[id]` - Delete blog (requires authentication)
 
 ## Database Schema
 
 The application uses MongoDB with the following main entities:
 - **Users**: Authentication and user management
-- **Posts**: Blog posts with categories and authors
-- **Categories**: Post categorization
-- **Comments**: User comments on posts
+- **Blogs**: Blog posts with authors
 
 ## Learn More
 

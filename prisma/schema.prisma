@@ -11,7 +11,7 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
   password  String
   name      String
@@ -20,28 +20,13 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  posts    Post[]
-  comments Comment[]
+  blogs Blog[]
 
   @@map("users")
 }
 
-model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  slug        String   @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  posts Post[]
-
-  @@map("categories")
-}
-
-model Post {
-  id        String   @id @default(cuid())
+model Blog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
   content   String
   slug      String   @unique
@@ -52,29 +37,10 @@ model Post {
   updatedAt DateTime @updatedAt
 
   // Relations
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  categoryId String?
-  category  Category? @relation(fields: [categoryId], references: [id])
-  comments  Comment[]
-
-  @@map("posts")
-}
-
-model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  approved  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
   authorId String
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  postId   String
-  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@map("comments")
+  @@map("blogs")
 }
 
 enum Role {

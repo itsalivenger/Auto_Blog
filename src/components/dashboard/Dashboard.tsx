@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 
-interface Post {
+interface Blog {
   id: string
   title: string
   content: string
@@ -17,19 +17,15 @@ interface Post {
     name: string
     email: string
   }
-  category?: {
-    id: string
-    name: string
-  }
 }
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
   const router = useRouter()
-  const [posts, setPosts] = useState<Post[]>([])
+  const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [newPost, setNewPost] = useState({
+  const [newBlog, setNewBlog] = useState({
     title: '',
     content: '',
     published: false
@@ -40,48 +36,48 @@ export default function Dashboard() {
       router.push('/login')
       return
     }
-    fetchPosts()
+    fetchBlogs()
   }, [user, router])
 
-  const fetchPosts = async () => {
+  const fetchBlogs = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/posts?limit=50', {
+      const response = await fetch('/api/blogs?limit=50', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       const data = await response.json()
       if (data.success) {
-        setPosts(data.data.posts)
+        setBlogs(data.data.blogs)
       }
     } catch (error) {
-      console.error('Error fetching posts:', error)
+      console.error('Error fetching blogs:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleCreatePost = async (e: React.FormEvent) => {
+  const handleCreateBlog = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/posts', {
+      const response = await fetch('/api/blogs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(newPost)
+        body: JSON.stringify(newBlog)
       })
       const data = await response.json()
       if (data.success) {
         setShowCreateForm(false)
-        setNewPost({ title: '', content: '', published: false })
-        fetchPosts()
+        setNewBlog({ title: '', content: '', published: false })
+        fetchBlogs()
       }
     } catch (error) {
-      console.error('Error creating post:', error)
+      console.error('Error creating blog:', error)
     }
   }
 
@@ -136,8 +132,8 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Posts</dt>
-                    <dd className="text-lg font-medium text-gray-900">{posts.length}</dd>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Total Blogs</dt>
+                    <dd className="text-lg font-medium text-gray-900">{blogs.length}</dd>
                   </dl>
                 </div>
               </div>
@@ -157,7 +153,7 @@ export default function Dashboard() {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Published</dt>
-                    <dd className="text-lg font-medium text-gray-900">{posts.filter(p => p.published).length}</dd>
+                    <dd className="text-lg font-medium text-gray-900">{blogs.filter(b => b.published).length}</dd>
                   </dl>
                 </div>
               </div>
@@ -177,7 +173,7 @@ export default function Dashboard() {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Drafts</dt>
-                    <dd className="text-lg font-medium text-gray-900">{posts.filter(p => !p.published).length}</dd>
+                    <dd className="text-lg font-medium text-gray-900">{blogs.filter(b => !b.published).length}</dd>
                   </dl>
                 </div>
               </div>
@@ -191,7 +187,7 @@ export default function Dashboard() {
             onClick={() => setShowCreateForm(!showCreateForm)}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
           >
-            {showCreateForm ? 'Cancel' : 'Create New Post'}
+            {showCreateForm ? 'Cancel' : 'Create New Blog'}
           </button>
         </div>
 
@@ -199,14 +195,14 @@ export default function Dashboard() {
         {showCreateForm && (
           <div className="bg-white shadow rounded-lg p-6 mb-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Post</h3>
-            <form onSubmit={handleCreatePost}>
+            <form onSubmit={handleCreateBlog}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Title</label>
                   <input
                     type="text"
-                    value={newPost.title}
-                    onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                    value={newBlog.title}
+                    onChange={(e) => setNewBlog({ ...newBlog, title: e.target.value })}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
                   />
@@ -214,8 +210,8 @@ export default function Dashboard() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Content</label>
                   <textarea
-                    value={newPost.content}
-                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                    value={newBlog.content}
+                    onChange={(e) => setNewBlog({ ...newBlog, content: e.target.value })}
                     rows={4}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
@@ -224,8 +220,8 @@ export default function Dashboard() {
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={newPost.published}
-                    onChange={(e) => setNewPost({ ...newPost, published: e.target.checked })}
+                    checked={newBlog.published}
+                    onChange={(e) => setNewBlog({ ...newBlog, published: e.target.checked })}
                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
                   <label className="ml-2 block text-sm text-gray-900">Publish immediately</label>
@@ -235,7 +231,7 @@ export default function Dashboard() {
                     type="submit"
                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                   >
-                    Create Post
+                    Create Blog
                   </button>
                 </div>
               </div>
@@ -246,18 +242,18 @@ export default function Dashboard() {
         {/* Posts List */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {posts.map((post) => (
-              <li key={post.id}>
+            {blogs.map((blog) => (
+              <li key={blog.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
-                        <div className={`w-2 h-2 rounded-full ${post.published ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                        <div className={`w-2 h-2 rounded-full ${blog.published ? 'bg-green-400' : 'bg-yellow-400'}`} />
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{post.title}</div>
+                        <div className="text-sm font-medium text-gray-900">{blog.title}</div>
                         <div className="text-sm text-gray-500">
-                          {post.published ? 'Published' : 'Draft'} • {new Date(post.createdAt).toLocaleDateString()}
+                          {blog.published ? 'Published' : 'Draft'} • {new Date(blog.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>

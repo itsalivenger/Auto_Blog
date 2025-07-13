@@ -2,13 +2,13 @@ import { NextRequest } from 'next/server'
 import { successResponse, errorResponse, sanitizeInput } from '@/lib/utils'
 import prisma from '@/lib/db'
 
-// GET /api/posts/[id] - Get single post
+// GET /api/blogs/[id] - Get single blog
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const post = await prisma.post.findUnique({
+    const blog = await prisma.blog.findUnique({
       where: { id: params.id },
       include: {
         author: {
@@ -17,31 +17,30 @@ export async function GET(
             name: true,
             email: true
           }
-        },
-        category: true
+        }
       }
     })
 
-    if (!post) {
-      return errorResponse('Post not found', 404)
+    if (!blog) {
+      return errorResponse('Blog not found', 404)
     }
 
-    return successResponse(post)
+    return successResponse(blog)
 
   } catch (error) {
-    console.error('Get post error:', error)
+    console.error('Get blog error:', error)
     return errorResponse('Internal server error', 500)
   }
 }
 
-// PUT /api/posts/[id] - Update post
+// PUT /api/blogs/[id] - Update blog
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const body = await request.json()
-    const { title, content, categoryId, published } = body
+    const { title, content, published } = body
 
     // Get user from headers (set by middleware)
     const userId = request.headers.get('x-user-id')
@@ -49,16 +48,16 @@ export async function PUT(
       return errorResponse('Authentication required', 401)
     }
 
-    // Check if post exists and user owns it
-    const existingPost = await prisma.post.findUnique({
+    // Check if blog exists and user owns it
+    const existingBlog = await prisma.blog.findUnique({
       where: { id: params.id }
     })
 
-    if (!existingPost) {
-      return errorResponse('Post not found', 404)
+    if (!existingBlog) {
+      return errorResponse('Blog not found', 404)
     }
 
-    if (existingPost.authorId !== userId) {
+    if (existingBlog.authorId !== userId) {
       return errorResponse('Unauthorized', 403)
     }
 
@@ -72,15 +71,11 @@ export async function PUT(
       updateData.content = sanitizeInput(content)
     }
     
-    if (categoryId !== undefined) {
-      updateData.categoryId = categoryId
-    }
-    
     if (published !== undefined) {
       updateData.published = published
     }
 
-    const post = await prisma.post.update({
+    const blog = await prisma.blog.update({
       where: { id: params.id },
       data: updateData,
       include: {
@@ -90,20 +85,19 @@ export async function PUT(
             name: true,
             email: true
           }
-        },
-        category: true
+        }
       }
     })
 
-    return successResponse(post, 'Post updated successfully')
+    return successResponse(blog, 'Blog updated successfully')
 
   } catch (error) {
-    console.error('Update post error:', error)
+    console.error('Update blog error:', error)
     return errorResponse('Internal server error', 500)
   }
 }
 
-// DELETE /api/posts/[id] - Delete post
+// DELETE /api/blogs/[id] - Delete blog
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -115,27 +109,27 @@ export async function DELETE(
       return errorResponse('Authentication required', 401)
     }
 
-    // Check if post exists and user owns it
-    const existingPost = await prisma.post.findUnique({
+    // Check if blog exists and user owns it
+    const existingBlog = await prisma.blog.findUnique({
       where: { id: params.id }
     })
 
-    if (!existingPost) {
-      return errorResponse('Post not found', 404)
+    if (!existingBlog) {
+      return errorResponse('Blog not found', 404)
     }
 
-    if (existingPost.authorId !== userId) {
+    if (existingBlog.authorId !== userId) {
       return errorResponse('Unauthorized', 403)
     }
 
-    await prisma.post.delete({
+    await prisma.blog.delete({
       where: { id: params.id }
     })
 
-    return successResponse(null, 'Post deleted successfully')
+    return successResponse(null, 'Blog deleted successfully')
 
   } catch (error) {
-    console.error('Delete post error:', error)
+    console.error('Delete blog error:', error)
     return errorResponse('Internal server error', 500)
   }
 } 
