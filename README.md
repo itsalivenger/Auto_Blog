@@ -19,11 +19,11 @@ A full-stack Next.js application with TypeScript for automated blog management a
 Copy the environment template and configure your variables:
 
 ```bash
-cp env.example .env.local
+cp env.local .env.local
 ```
 
 Edit `.env.local` with your configuration:
-- **DATABASE_URL**: Your PostgreSQL connection string
+- **DATABASE_URL**: Your MongoDB connection string
 - **JWT_SECRET**: A secure random string for JWT tokens
 - **NEXTAUTH_SECRET**: A secure random string for NextAuth
 - Add other API keys as needed
@@ -89,7 +89,7 @@ npm run db:generate
 
 ## Database Schema
 
-The application uses PostgreSQL with the following main entities:
+The application uses MongoDB with the following main entities:
 - **Users**: Authentication and user management
 - **Posts**: Blog posts with categories and authors
 - **Categories**: Post categorization
