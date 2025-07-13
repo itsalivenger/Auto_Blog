@@ -30,20 +30,14 @@ Edit `.env.local` with your configuration:
 
 ### 2. Database Setup
 
-Install and set up your database:
+Set up your MongoDB database:
 
 ```bash
-# Generate Prisma client
-npm run db:generate
-
-# Push schema to database (for development)
-npm run db:push
-
-# Or run migrations (for production)
-npm run db:migrate
+# Create .env file with your MongoDB connection string
+# DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/auto_blog?retryWrites=true&w=majority"
 
 # Seed the database with sample data
-npm run db:seed
+npx tsx src/lib/seed.ts
 ```
 
 ### 3. Development Server
@@ -55,16 +49,6 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-### 4. Database Management
-
-```bash
-# Open Prisma Studio (database GUI)
-npm run db:studio
-
-# Generate Prisma client after schema changes
-npm run db:generate
-```
 
 ## API Endpoints
 

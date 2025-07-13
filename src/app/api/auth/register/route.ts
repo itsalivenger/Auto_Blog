@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server'
 import { successResponse, errorResponse, validateEmail, validatePassword } from '@/lib/utils'
 import { hashPassword, generateToken } from '@/lib/auth'
-import prisma from '@/lib/db'
+import { getDb } from '@/lib/db'
+import { ObjectId } from 'mongodb'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,10 +22,10 @@ export async function POST(request: NextRequest) {
       return errorResponse('Password must be at least 8 characters long')
     }
 
+    const db = await getDb()
+
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
+    const existingUser = await db.collection('users').findOne({ email })
 
     if (existingUser) {
       return errorResponse('User with this email already exists')
@@ -33,28 +34,30 @@ export async function POST(request: NextRequest) {
     // Hash password and create user
     const hashedPassword = hashPassword(password)
     
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        role: 'USER'
-      }
+    const user = await db.collection('users').insertOne({
+      email,
+      password: hashedPassword,
+      name,
+      role: 'USER',
+      createdAt: new Date(),
+      updatedAt: new Date()
     })
+
+    const createdUser = await db.collection('users').findOne({ _id: user.insertedId })
 
     // Generate token
     const token = generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role
+      userId: createdUser!._id.toString(),
+      email: createdUser!.email,
+      role: createdUser!.role
     })
 
     return successResponse({
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
+        id: createdUser!._id.toString(),
+        email: createdUser!.email,
+        name: createdUser!.name,
+        role: createdUser!.role
       },
       token
     }, 'User registered successfully')

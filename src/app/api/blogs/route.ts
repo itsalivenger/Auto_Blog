@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { successResponse, errorResponse, generateSlug, sanitizeInput } from '@/lib/utils'
-import prisma from '@/lib/db'
+import { getDb } from '@/lib/db'
+import { ObjectId } from 'mongodb'
 
 // GET /api/blogs - Get all blogs
 export async function GET(request: NextRequest) {
@@ -12,38 +13,47 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    const where: any = {
-      published: true
-    }
+    const db = await getDb()
+
+    let query: any = { published: true }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { content: { contains: search, mode: 'insensitive' } }
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } }
       ]
     }
 
     const [blogs, total] = await Promise.all([
-      prisma.blog.findMany({
-        where,
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit
-      }),
-      prisma.blog.count({ where })
+      db.collection('blogs').find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+      db.collection('blogs').countDocuments(query)
     ])
 
+    // Get author information for each blog
+    const blogsWithAuthors = await Promise.all(
+      blogs.map(async (blog) => {
+        const author = await db.collection('users').findOne(
+          { _id: new ObjectId(blog.authorId) },
+          { projection: { password: 0 } }
+        )
+        return {
+          ...blog,
+          id: blog._id.toString(),
+          author: author ? {
+            id: author._id.toString(),
+            name: author.name,
+            email: author.email
+          } : null
+        }
+      })
+    )
+
     return successResponse({
-      blogs,
+      blogs: blogsWithAuthors,
       pagination: {
         page,
         limit,
@@ -78,26 +88,33 @@ export async function POST(request: NextRequest) {
     const sanitizedTitle = sanitizeInput(title)
     const sanitizedContent = sanitizeInput(content)
 
-    const blog = await prisma.blog.create({
-      data: {
-        title: sanitizedTitle,
-        content: sanitizedContent,
-        slug,
-        published,
-        authorId: userId
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
+    const db = await getDb()
+
+    const blog = await db.collection('blogs').insertOne({
+      title: sanitizedTitle,
+      content: sanitizedContent,
+      slug,
+      published,
+      authorId: userId,
+      createdAt: new Date(),
+      updatedAt: new Date()
     })
 
-    return successResponse(blog, 'Blog created successfully')
+    const createdBlog = await db.collection('blogs').findOne({ _id: blog.insertedId })
+    const author = await db.collection('users').findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { password: 0 } }
+    )
+
+    return successResponse({
+      ...createdBlog,
+      id: createdBlog!._id.toString(),
+      author: author ? {
+        id: author._id.toString(),
+        name: author.name,
+        email: author.email
+      } : null
+    }, 'Blog created successfully')
 
   } catch (error) {
     console.error('Create blog error:', error)

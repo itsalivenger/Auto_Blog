@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { successResponse, errorResponse, validateEmail } from '@/lib/utils'
 import { verifyPassword, generateToken } from '@/lib/auth'
-import prisma from '@/lib/db'
+import { getDb } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid email format')
     }
 
+    const db = await getDb()
+
     // Find user
-    const user = await prisma.user.findUnique({
-      where: { email }
-    })
+    const user = await db.collection('users').findOne({ email })
 
     if (!user) {
       return errorResponse('Invalid credentials')
@@ -34,14 +34,14 @@ export async function POST(request: NextRequest) {
 
     // Generate token
     const token = generateToken({
-      userId: user.id,
+      userId: user._id.toString(),
       email: user.email,
       role: user.role
     })
 
     return successResponse({
       user: {
-        id: user.id,
+        id: user._id.toString(),
         email: user.email,
         name: user.name,
         role: user.role

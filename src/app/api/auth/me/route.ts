@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server'
 import { successResponse, errorResponse } from '@/lib/utils'
 import { verifyToken, getTokenFromRequest } from '@/lib/auth'
-import prisma from '@/lib/db'
+import { getDb } from '@/lib/db'
+import { ObjectId } from 'mongodb'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,21 +17,23 @@ export async function GET(request: NextRequest) {
       return errorResponse('Invalid token', 401)
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true
-      }
-    })
+    const db = await getDb()
+
+    const user = await db.collection('users').findOne(
+      { _id: new ObjectId(payload.userId) },
+      { projection: { password: 0 } }
+    )
 
     if (!user) {
       return errorResponse('User not found', 404)
     }
 
-    return successResponse(user)
+    return successResponse({
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role
+    })
 
   } catch (error) {
     console.error('Get user error:', error)

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { successResponse, errorResponse, sanitizeInput } from '@/lib/utils'
-import prisma from '@/lib/db'
+import { getDb } from '@/lib/db'
+import { ObjectId } from 'mongodb'
 
 // GET /api/blogs/[id] - Get single blog
 export async function GET(
@@ -8,24 +9,28 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const blog = await prisma.blog.findUnique({
-      where: { id: params.id },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
-    })
+    const db = await getDb()
+
+    const blog = await db.collection('blogs').findOne({ _id: new ObjectId(params.id) })
 
     if (!blog) {
       return errorResponse('Blog not found', 404)
     }
 
-    return successResponse(blog)
+    const author = await db.collection('users').findOne(
+      { _id: new ObjectId(blog.authorId) },
+      { projection: { password: 0 } }
+    )
+
+    return successResponse({
+      ...blog,
+      id: blog._id.toString(),
+      author: author ? {
+        id: author._id.toString(),
+        name: author.name,
+        email: author.email
+      } : null
+    })
 
   } catch (error) {
     console.error('Get blog error:', error)
@@ -48,10 +53,10 @@ export async function PUT(
       return errorResponse('Authentication required', 401)
     }
 
+    const db = await getDb()
+
     // Check if blog exists and user owns it
-    const existingBlog = await prisma.blog.findUnique({
-      where: { id: params.id }
-    })
+    const existingBlog = await db.collection('blogs').findOne({ _id: new ObjectId(params.id) })
 
     if (!existingBlog) {
       return errorResponse('Blog not found', 404)
@@ -61,7 +66,7 @@ export async function PUT(
       return errorResponse('Unauthorized', 403)
     }
 
-    const updateData: any = {}
+    const updateData: any = { updatedAt: new Date() }
     
     if (title !== undefined) {
       updateData.title = sanitizeInput(title)
@@ -75,21 +80,26 @@ export async function PUT(
       updateData.published = published
     }
 
-    const blog = await prisma.blog.update({
-      where: { id: params.id },
-      data: updateData,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
-    })
+    await db.collection('blogs').updateOne(
+      { _id: new ObjectId(params.id) },
+      { $set: updateData }
+    )
 
-    return successResponse(blog, 'Blog updated successfully')
+    const updatedBlog = await db.collection('blogs').findOne({ _id: new ObjectId(params.id) })
+    const author = await db.collection('users').findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { password: 0 } }
+    )
+
+    return successResponse({
+      ...updatedBlog,
+      id: updatedBlog!._id.toString(),
+      author: author ? {
+        id: author._id.toString(),
+        name: author.name,
+        email: author.email
+      } : null
+    }, 'Blog updated successfully')
 
   } catch (error) {
     console.error('Update blog error:', error)
@@ -109,10 +119,10 @@ export async function DELETE(
       return errorResponse('Authentication required', 401)
     }
 
+    const db = await getDb()
+
     // Check if blog exists and user owns it
-    const existingBlog = await prisma.blog.findUnique({
-      where: { id: params.id }
-    })
+    const existingBlog = await db.collection('blogs').findOne({ _id: new ObjectId(params.id) })
 
     if (!existingBlog) {
       return errorResponse('Blog not found', 404)
@@ -122,9 +132,7 @@ export async function DELETE(
       return errorResponse('Unauthorized', 403)
     }
 
-    await prisma.blog.delete({
-      where: { id: params.id }
-    })
+    await db.collection('blogs').deleteOne({ _id: new ObjectId(params.id) })
 
     return successResponse(null, 'Blog deleted successfully')
 
