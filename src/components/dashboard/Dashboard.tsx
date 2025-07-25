@@ -1,50 +1,54 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 
 interface Blog {
-  id: string
+  _id?: string // MongoDB _id
+  id?: string
   title: string
   content: string
-  slug: string
-  published: boolean
-  featured: boolean
-  createdAt: string
-  author: {
+  slug?: string
+  published?: boolean
+  featured?: boolean
+  createdAt?: string
+  author?: {
     id: string
     name: string
     email: string
   }
+  images?: string[]
+  published_at?: string
+  source?: string
 }
 
+const PAGE_SIZE = 10
+
 export default function Dashboard() {
-  const { user, logout } = useAuth()
+  const { user, loading: authLoading, logout } = useAuth()
   const router = useRouter()
   const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [newBlog, setNewBlog] = useState({
-    title: '',
-    content: '',
-    published: false
-  })
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/login')
       return
     }
     if (user) {
-      fetchBlogs()
+      fetchBlogs(page)
     }
-  }, [user, loading, router])
+    // eslint-disable-next-line
+  }, [user, authLoading, page, router])
 
-  const fetchBlogs = async () => {
+  const fetchBlogs = async (pageNum: number) => {
     try {
+      setLoading(true)
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/blogs?limit=50', {
+      const response = await fetch(`/api/blogs?limit=${PAGE_SIZE}&page=${pageNum}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -52,34 +56,12 @@ export default function Dashboard() {
       const data = await response.json()
       if (data.success) {
         setBlogs(data.data.blogs)
+        setTotalPages(data.data.pagination.pages)
       }
     } catch (error) {
       console.error('Error fetching blogs:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleCreateBlog = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/blogs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newBlog)
-      })
-      const data = await response.json()
-      if (data.success) {
-        setShowCreateForm(false)
-        setNewBlog({ title: '', content: '', published: false })
-        fetchBlogs()
-      }
-    } catch (error) {
-      console.error('Error creating blog:', error)
     }
   }
 
@@ -91,7 +73,13 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+        <div className="flex flex-col items-center">
+          <svg className="animate-spin h-8 w-8 text-indigo-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+          <div className="text-xl">Loading...</div>
+        </div>
       </div>
     )
   }
@@ -118,160 +106,99 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Stats */}
+      <div className="flex justify-center my-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+          <div className="bg-white overflow-hidden shadow rounded-lg p-6 flex flex-col items-center">
+            <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center mb-2">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div className="text-lg font-bold text-gray-900">{blogs.length}</div>
+            <div className="text-sm text-gray-500 mt-1">Total Blogs</div>
+            <div className="text-xs text-gray-400 mt-1 text-center">All blogs in your database, including drafts and published posts.</div>
+          </div>
+          <div className="bg-white overflow-hidden shadow rounded-lg p-6 flex flex-col items-center">
+            <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center mb-2">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="text-lg font-bold text-gray-900">{blogs.filter(b => b.published).length}</div>
+            <div className="text-sm text-gray-500 mt-1">Published</div>
+            <div className="text-xs text-gray-400 mt-1 text-center">Blogs visible to the public.</div>
+          </div>
+          <div className="bg-white overflow-hidden shadow rounded-lg p-6 flex flex-col items-center">
+            <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center mb-2">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="text-lg font-bold text-gray-900">{blogs.filter(b => !b.published).length}</div>
+            <div className="text-sm text-gray-500 mt-1">Drafts</div>
+            <div className="text-xs text-gray-400 mt-1 text-center">Blogs saved as drafts, not visible to the public.</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Posts List */}
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Blogs</dt>
-                    <dd className="text-lg font-medium text-gray-900">{blogs.length}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Published</dt>
-                    <dd className="text-lg font-medium text-gray-900">{blogs.filter(b => b.published).length}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Drafts</dt>
-                    <dd className="text-lg font-medium text-gray-900">{blogs.filter(b => !b.published).length}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Create Post Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-          >
-            {showCreateForm ? 'Cancel' : 'Create New Blog'}
-          </button>
-        </div>
-
-        {/* Create Post Form */}
-        {showCreateForm && (
-          <div className="bg-white shadow rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Post</h3>
-            <form onSubmit={handleCreateBlog}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Title</label>
-                  <input
-                    type="text"
-                    value={newBlog.title}
-                    onChange={(e) => setNewBlog({ ...newBlog, title: e.target.value })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Content</label>
-                  <textarea
-                    value={newBlog.content}
-                    onChange={(e) => setNewBlog({ ...newBlog, content: e.target.value })}
-                    rows={4}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    required
-                  />
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={newBlog.published}
-                    onChange={(e) => setNewBlog({ ...newBlog, published: e.target.checked })}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 block text-sm text-gray-900">Publish immediately</label>
-                </div>
-                <div>
-                  <button
-                    type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                  >
-                    Create Blog
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Posts List */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
             {blogs.map((blog) => (
-              <li key={blog.id}>
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className={`w-2 h-2 rounded-full ${blog.published ? 'bg-green-400' : 'bg-yellow-400'}`} />
+              <li key={blog._id || blog.id}>
+                <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
+                  <div className="flex items-center">
+                    {/* Thumbnail */}
+                    {blog.images && blog.images.length > 0 ? (
+                      <img
+                        src={blog.images[0]}
+                        alt={`Thumbnail for ${blog.title}`}
+                        className="w-16 h-16 object-cover rounded mr-4 border border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded mr-4 flex items-center justify-center text-gray-400 text-xs">
+                        No Image
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{blog.title}</div>
-                        <div className="text-sm text-gray-500">
-                          {blog.published ? 'Published' : 'Draft'} • {new Date(blog.createdAt).toLocaleDateString()}
-                        </div>
+                    )}
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{blog.title}</div>
+                      <div className="text-xs text-gray-500 mb-1">
+                        {blog.published_at ? new Date(blog.published_at).toLocaleDateString() : ''} • {blog.source}
+                      </div>
+                      <div className="text-xs text-gray-700 line-clamp-2 max-w-xs">
+                        {blog.content?.slice(0, 120)}{blog.content && blog.content.length > 120 ? '...' : ''}
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <button className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
-                        Edit
-                      </button>
-                      <button className="text-red-600 hover:text-red-900 text-sm font-medium">
-                        Delete
-                      </button>
-                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button className="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition">Preview</button>
+                    <button className="px-3 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold transition">Edit</button>
+                    <button className="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition">Remove</button>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
+        </div>
+        {/* Pagination */}
+        <div className="flex justify-center mt-6 space-x-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1 text-xs font-medium">Page {page} of {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     const db = await getDb()
 
-    let query: any = { published: true }
+    let query: any = {}
 
     if (search) {
       query.$or = [
