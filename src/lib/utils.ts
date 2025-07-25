@@ -49,6 +49,21 @@ export function formatDate(date: Date): string {
   return date.toISOString()
 }
 
-export function parseDate(dateString: string): Date {
-  return new Date(dateString)
-} 
+export function parseMongoDate(mongoDate: any): Date {
+  if (typeof mongoDate === 'string') {
+    return new Date(mongoDate);
+  } else if (mongoDate && mongoDate.$date) {
+    return new Date(mongoDate.$date);
+  }
+  return new Date(); // Fallback to current date
+}
+
+export function extractImageFromRSS(rssContent: string): string | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rssContent, "text/html");
+    const img = doc.querySelector('img');
+    return img ? img.src : null;
+}
