@@ -32,12 +32,14 @@ export default function Dashboard() {
   })
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       router.push('/login')
       return
     }
-    fetchBlogs()
-  }, [user, router])
+    if (user) {
+      fetchBlogs()
+    }
+  }, [user, loading, router])
 
   const fetchBlogs = async () => {
     try {

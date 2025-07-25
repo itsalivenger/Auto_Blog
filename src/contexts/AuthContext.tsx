@@ -26,6 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check if user is logged in on app load
     const token = localStorage.getItem('token')
+    console.log('AuthContext useEffect: Checking for token', token ? 'Token found' : 'No token')
+
     if (token) {
       // Verify token and get user info
       fetch('/api/auth/me', {
@@ -33,22 +35,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'Authorization': `Bearer ${token}`
         }
       })
-      .then(res => res.json())
+      .then(res => {
+        console.log('AuthContext useEffect: /api/auth/me response status', res.status)
+        return res.json()
+      })
       .then(data => {
-        if (data.success) {
-          setUser(data.user)
+        console.log('AuthContext useEffect: /api/auth/me response data', data)
+        if (data.success && data.data) {
+          setUser(data.data)
+          console.log('AuthContext useEffect: User set', data.data.email)
         } else {
+          console.log('AuthContext useEffect: /api/auth/me failed, removing token')
           localStorage.removeItem('token')
         }
       })
-      .catch(() => {
+      .catch(error => {
+        console.error('AuthContext useEffect: Error fetching /api/auth/me', error)
         localStorage.removeItem('token')
       })
       .finally(() => {
         setLoading(false)
+        console.log('AuthContext useEffect: Loading set to false')
       })
     } else {
       setLoading(false)
+      console.log('AuthContext useEffect: No token, loading set to false')
     }
   }, [])
 

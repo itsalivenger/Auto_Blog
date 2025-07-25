@@ -9,6 +9,7 @@ export interface JWTPayload {
 }
 
 export function generateToken(payload: JWTPayload): string {
+  console.log('Auth lib: Generating token with JWT_SECRET:', process.env.JWT_SECRET)
   return jwt.sign(payload, process.env.JWT_SECRET!, {
     expiresIn: '7d',
   })
@@ -16,8 +17,10 @@ export function generateToken(payload: JWTPayload): string {
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
+    console.log('Auth lib: Verifying token with JWT_SECRET:', process.env.JWT_SECRET)
     return jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload
   } catch (error) {
+    console.error('Auth lib: Token verification error:', error)
     return null
   }
 }

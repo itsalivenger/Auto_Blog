@@ -8,7 +8,7 @@ export async function connectToDatabase() {
     return { client, db }
   }
 
-  const uri = process.env.DATABASE_URL!
+  const uri = process.env.MONGODB_URI!
   client = new MongoClient(uri)
   
   try {
@@ -23,7 +23,9 @@ export async function connectToDatabase() {
 }
 
 export async function getDb() {
+  console.log('getDb called')
   if (!db) {
+    console.log('Database connection not established, calling connectToDatabase')
     await connectToDatabase()
   }
   return db!

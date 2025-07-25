@@ -15,9 +15,9 @@ export function middleware(request: NextRequest) {
   }
 
   // Authentication middleware for protected routes
-  if (request.nextUrl.pathname.startsWith('/api/auth') || 
-      request.nextUrl.pathname.startsWith('/api/admin') ||
-      request.nextUrl.pathname.startsWith('/api/blogs')) {
+  if (
+    request.nextUrl.pathname.startsWith('/api/admin')
+  ) {
     
     const token = getTokenFromRequest(request)
     

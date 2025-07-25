@@ -4,6 +4,7 @@ import { verifyPassword, generateToken } from '@/lib/auth'
 import { getDb } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
+  console.log('naa7no honaaa');
   try {
     const body = await request.json()
     const { email, password } = body

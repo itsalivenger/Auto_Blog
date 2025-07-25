@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     const payload = verifyToken(token)
+    console.log('Auth/me route: Token payload after verification:', payload)
     if (!payload) {
       return errorResponse('Invalid token', 401)
     }
