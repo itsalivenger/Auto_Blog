@@ -74,7 +74,7 @@ export default function BlogReviewPage() {
       
       const data = await response.json()
       console.log('🔍 Review page blog data:', data)
-      setBlog(data.blog)
+      setBlog(data.data)
     } catch (error) {
       console.error('Error fetching blog:', error)
       router.push('/dashboard')
@@ -212,7 +212,8 @@ export default function BlogReviewPage() {
     try {
       console.log('Publishing blog:', { publishNow, publishDate, publishTime })
       
-      const response = await authenticatedFetch('/api/blogger/publish', {
+      // const response = await authenticatedFetch('/api/blogger/publish', {
+      const response = await fetch('/api/blogger/publish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
