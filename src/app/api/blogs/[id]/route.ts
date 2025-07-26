@@ -6,10 +6,9 @@ import { ObjectId } from 'mongodb'
 // GET /api/blogs/[id] - Get single blog
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = context.params;
     const db = await getDb()
 
     const blog = await db.collection('blogs').findOne({ _id: new ObjectId(params.id) })
@@ -42,10 +41,9 @@ export async function GET(
 // PUT /api/blogs/[id] - Update blog
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = context.params;
     const body = await request.json()
     const { title, content, published } = body
 
@@ -112,10 +110,9 @@ export async function PUT(
 // DELETE /api/blogs/[id] - Delete blog
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = context.params;
     // Get user from headers (set by middleware)
     const userId = request.headers.get('x-user-id')
     if (!userId) {
