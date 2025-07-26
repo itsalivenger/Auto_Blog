@@ -14,7 +14,7 @@ if (!MONGODB_URI) {
 
 async function seed() {
   try {
-    await mongoose.connect(MONGODB_URI)
+    await mongoose.connect(MONGODB_URI!)  // Non-null assertion here
     console.log('Connected to MongoDB for seeding')
 
     // Clear existing users
