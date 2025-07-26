@@ -1,0 +1,20 @@
+<div style="max-width: 700px; margin: auto; font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  <h2 style="color: #2c3e50;">{{POST_TITLE}}</h2>
+  
+  <p>{{INTRO_PARAGRAPH}}</p>
+  
+  {{#each IMAGES}}
+  <figure style="margin: 20px 0; text-align: center;">
+    <img src="{{this.url}}" alt="{{this.alt}}" style="max-width: 100%; height: auto; border-radius: 8px;" />
+    <figcaption style="font-size: 0.9em; color: #777; margin-top: 8px;">{{this.caption}}</figcaption>
+  </figure>
+  {{/each}}
+  
+  {{#each BODY_PARAGRAPHS}}
+  <p>{{this}}</p>
+  {{/each}}
+  
+  <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+  
+  <p style="font-size: 0.9em; color: #555;">Posted on {{POST_DATE}}</p>
+</div>

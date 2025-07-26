@@ -24,13 +24,15 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const [blogs, total] = await Promise.all([
+    const [blogs, total, totalPublished, totalDrafts] = await Promise.all([
       db.collection('blogs').find(query)
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(limit)
         .toArray(),
-      db.collection('blogs').countDocuments(query)
+      db.collection('blogs').countDocuments(query),
+      db.collection('blogs').countDocuments({ ...query, published: true }),
+      db.collection('blogs').countDocuments({ ...query, published: false })
     ])
 
     // Get author information for each blog
@@ -58,7 +60,9 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
+        totalPublished,
+        totalDrafts
       }
     })
 

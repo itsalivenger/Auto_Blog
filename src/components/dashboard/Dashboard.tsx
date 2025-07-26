@@ -38,6 +38,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalBlogsCount, setTotalBlogsCount] = useState(0)
+  const [totalPublishedCount, setTotalPublishedCount] = useState(0)
+  const [totalDraftsCount, setTotalDraftsCount] = useState(0)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [blogToDelete, setBlogToDelete] = useState<Blog | null>(null)
 
@@ -71,6 +74,9 @@ export default function Dashboard() {
       if (data.success) {
         setBlogs(data.data.blogs)
         setTotalPages(data.data.pagination.pages)
+        setTotalBlogsCount(data.data.pagination.total)
+        setTotalPublishedCount(data.data.pagination.totalPublished)
+        setTotalDraftsCount(data.data.pagination.totalDrafts)
       }
     } catch (error) {
       console.error('Error fetching blogs:', error)
@@ -171,7 +177,7 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-            <div className="text-lg font-bold text-gray-900">{blogs.length}</div>
+            <div className="text-lg font-bold text-gray-900">{totalBlogsCount}</div>
             <div className="text-sm text-gray-500 mt-1">Total Blogs</div>
             <div className="text-xs text-gray-400 mt-1 text-center">All blogs in your database, including drafts and published posts.</div>
           </div>
@@ -181,7 +187,7 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-            <div className="text-lg font-bold text-gray-900">{blogs.filter(b => b.published).length}</div>
+            <div className="text-lg font-bold text-gray-900">{totalPublishedCount}</div>
             <div className="text-sm text-gray-500 mt-1">Published</div>
             <div className="text-xs text-gray-400 mt-1 text-center">Blogs visible to the public.</div>
           </div>
@@ -191,7 +197,7 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-            <div className="text-lg font-bold text-gray-900">{blogs.filter(b => !b.published).length}</div>
+            <div className="text-lg font-bold text-gray-900">{totalDraftsCount}</div>
             <div className="text-sm text-gray-500 mt-1">Drafts</div>
             <div className="text-xs text-gray-400 mt-1 text-center">Blogs saved as drafts, not visible to the public.</div>
           </div>
@@ -201,6 +207,25 @@ export default function Dashboard() {
         {/* Posts List */}
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          {/* Pagination (Top) */}
+        <div className="flex justify-center mt-6 mb-4 space-x-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1 text-xs font-medium">Page {page} of {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+
           <ul className="divide-y divide-gray-200">
             {blogs.map((blog, idx) => (
               <li key={blog._id || blog.id || idx}>
@@ -209,7 +234,7 @@ export default function Dashboard() {
                     {/* Thumbnail */}
                     {blog.images && blog.images.length > 0 ? (
                       <img
-                        src={blog.images[1]}
+                        src={blog.images[1] || blog.images[0]}
                         alt={`Thumbnail for ${blog.title}`}
                         className="w-16 h-16 object-cover rounded mr-4 border border-gray-200"
                       />
