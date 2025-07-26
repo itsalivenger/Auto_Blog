@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const db = await getDb()
 
     // 1. Fetch an unpublished blog
-    const blogToPublish = await db.collection('blogs').findOne({
+    blogToPublish = await db.collection('blogs').findOne({
       published: false
     }, {
       sort: { createdAt: 1 } // Get the oldest unpublished blog
