@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       to: process.env.ADMIN_EMAIL || '',
       subject: `Blog Published: ${blogToPublish.title} (#${publishedBlogsCount})`,
       html: `
-        <p>Dear Admin,</p>
+        <p>Dear Ali,</p>
         <p>A new blog post has been successfully published to Blogger:</p>
         <p><strong>Title:</strong> ${blogToPublish.title}</p>
         <p><strong>Blogger Post ID:</strong> ${bloggerResult.id}</p>
