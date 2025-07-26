@@ -4,13 +4,13 @@ import { scheduleBloggerPost } from '@/lib/blogger-api'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { blogId, publishDate, publishTime, publishNow } = body
+    const { blog, publishDate, publishTime, publishNow } = body
 
-    console.log('Blogger publish request:', { blogId, publishDate, publishTime, publishNow })
+    console.log('Blogger publish request:', { blogId: blog._id, publishDate, publishTime, publishNow })
 
-    if (!blogId) {
+    if (!blog || !blog._id) {
       return NextResponse.json(
-        { error: 'Blog ID is required' },
+        { error: 'Blog data is required' },
         { status: 400 }
       )
     }
@@ -32,34 +32,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch the blog data
-    const blogResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/blogs/${blogId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    
 
-    if (!blogResponse.ok) {
-      const errorData = await blogResponse.text()
-      console.error('Failed to fetch blog data:', errorData)
-      throw new Error('Failed to fetch blog data')
-    }
-
-    const blogData = await blogResponse.json()
-    const blog = blogData.blog
-
-    console.log('Blog data fetched:', {
+    console.log('Blog data received:', {
       title: blog.title,
+      contentLength: blog.content?.length || 0,
       hasImages: blog.images && blog.images.length > 0,
       imageCount: blog.images?.length || 0
     })
 
     // Prepare the post for Blogger
+    const imagesToSend = blog.images ? [...blog.images] : []
+    if (imagesToSend.length > 1) {
+      // Swap the first and second images to make the second image the primary one
+      [imagesToSend[0], imagesToSend[1]] = [imagesToSend[1], imagesToSend[0]]
+    }
+
     const post = {
       title: blog.title,
       content: blog.content,
-      images: blog.images || []
+      images: imagesToSend
     }
 
     // Schedule the post on Blogger

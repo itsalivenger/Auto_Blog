@@ -212,14 +212,18 @@ export default function BlogReviewPage() {
     try {
       console.log('Publishing blog:', { publishNow, publishDate, publishTime })
       
-      // const response = await authenticatedFetch('/api/blogger/publish', {
+      const token = localStorage.getItem('token')
       const response = await fetch('/api/blogger/publish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          blogId: typeof blog._id === 'string' ? blog._id : blog._id.$oid,
+          blog: {
+            ...blog,
+            content: getCurrentContent() // Ensure we send the currently displayed content (original or AI-improved)
+          },
           publishDate: publishNow ? new Date().toISOString().split('T')[0] : publishDate,
           publishTime: publishNow ? new Date().toISOString().split('T')[1].split('.')[0] : publishTime,
           publishNow
