@@ -22,11 +22,21 @@ export async function POST(request: NextRequest) {
   )
 
   if (!blogToPublish) {
-    await sendEmail({
-      to: process.env.ADMIN_EMAIL || '',
-      subject: 'Auto-Publish: No Unpublished Blogs Found',
-      html: '<p>Dear Admin,</p><p>The auto-publish cron job ran, but no unpublished blogs were found in the database.</p><p>Best regards,</p><p>Your Auto-Blogger</p>',
-    })
+    const appSettings = await db.collection('app_settings').findOne({ _id: new ObjectId('60c72b2f9b1e8b001c8e4d7a') }); // Use a fixed ID for settings
+    const noBlogsEmailSent = appSettings?.noBlogsEmailSent || false;
+
+    if (!noBlogsEmailSent) {
+      await sendEmail({
+        to: process.env.ADMIN_EMAIL || '',
+        subject: 'Auto-Publish: No Unpublished Blogs Found',
+        html: '<p>Dear Admin,</p><p>The auto-publish cron job ran, but no unpublished blogs were found in the database.</p><p>Best regards,</p><p>Your Auto-Blogger</p>',
+      });
+      await db.collection('app_settings').updateOne(
+        { _id: new ObjectId('60c72b2f9b1e8b001c8e4d7a') },
+        { $set: { noBlogsEmailSent: true } },
+        { upsert: true }
+      );
+    }
     return NextResponse.json({ message: 'No unpublished blogs found.' }, { status: 200 })
   }
 
@@ -76,11 +86,21 @@ export async function POST(request: NextRequest) {
     }
   )
 
+  // Get the total count of published blogs
+  const publishedBlogsCount = await db.collection('blogs').countDocuments({ published: true });
+
+  // Reset noBlogsEmailSent flag
+  await db.collection('app_settings').updateOne(
+    { _id: new ObjectId('60c72b2f9b1e8b001c8e4d7a') },
+    { $set: { noBlogsEmailSent: false } },
+    { upsert: true }
+  );
+
   // Send email notification after successful publish
   try {
     await sendEmail({
       to: process.env.ADMIN_EMAIL || '',
-      subject: `Blog Published: ${blogToPublish.title}`,
+      subject: `Blog Published: ${blogToPublish.title} (#${publishedBlogsCount})`,
       html: `
         <p>Dear Admin,</p>
         <p>A new blog post has been successfully published to Blogger:</p>
@@ -88,6 +108,7 @@ export async function POST(request: NextRequest) {
         <p><strong>Blogger Post ID:</strong> ${bloggerResult.id}</p>
         <p><strong>Blogger Post URL:</strong> <a href="${bloggerResult.url}">${bloggerResult.url}</a></p>
         <p><strong>Scheduled For:</strong> ${publishNow ? 'Now' : `${publishDate} ${publishTime}`}</p>
+        <p><strong>Total Published Blogs:</strong> ${publishedBlogsCount}</p>
         <p>Best regards,</p>
         <p>Your Auto-Blogger</p>
       `,
