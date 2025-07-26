@@ -14,7 +14,7 @@ export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [settings, setSettings] = useState<Settings>({
-    postInterval: 60, // Default to 60 minutes
+    postInterval: 60,
     automationEnabled: true,
     sources: []
   })
@@ -39,9 +39,7 @@ export default function SettingsPage() {
           'Authorization': `Bearer ${token}`,
         },
       })
-      if (!response.ok) {
-        throw new Error('Failed to fetch settings')
-      }
+      if (!response.ok) throw new Error('Failed to fetch settings')
       const data = await response.json()
       setSettings(data.settings)
     } catch (error) {
@@ -62,9 +60,7 @@ export default function SettingsPage() {
         },
         body: JSON.stringify(settings),
       })
-      if (!response.ok) {
-        throw new Error('Failed to save settings')
-      }
+      if (!response.ok) throw new Error('Failed to save settings')
       alert('Settings saved successfully!')
     } catch (error) {
       console.error('Error saving settings:', error)
@@ -84,9 +80,7 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({ url: newSourceUrl }),
       })
-      if (!response.ok) {
-        throw new Error('Failed to add source')
-      }
+      if (!response.ok) throw new Error('Failed to add source')
       const data = await response.json()
       setSettings(prev => ({
         ...prev,
@@ -102,12 +96,14 @@ export default function SettingsPage() {
 
   const handleRemoveSource = async (sourceId: string) => {
     try {
-      const response = await authenticatedFetch(`/api/sources/${sourceId}`, {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/sources/${sourceId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       })
-      if (!response.ok) {
-        throw new Error('Failed to remove source')
-      }
+      if (!response.ok) throw new Error('Failed to remove source')
       setSettings(prev => ({
         ...prev,
         sources: prev.sources.filter(s => s.id !== sourceId)
