@@ -10,6 +10,7 @@
 !.yarn/releases
 !.yarn/versions
 temp.txt
+temp.json
 
 # testing
 /coverage
