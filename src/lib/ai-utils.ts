@@ -191,7 +191,7 @@ ${text}`;
 
     return data.candidates[0].content.parts[0].text.replace(/#+/g, '');
   } catch (error) {
-    """    console.error('Error calling Gemini API for SEO improvement:', error);
+    console.error('Error calling Gemini API for SEO improvement:', error);
     throw new Error(`Failed to optimize text for SEO: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 } 

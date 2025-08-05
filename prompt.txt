@@ -1,4 +1,8 @@
-Type error: Route "src/app/api/blogs/[id]/route.ts" has an invalid "GET" export:
-  Type "{ params: { id: string; }; }" is not a valid type for the function's second argument.
-Next.js build worker exited with code: 1 and signal: null
-Error: Command "npm run build" exited with 1
+return data.candidates[0].content.parts[0].text.replace(/#+/g, '');
+ 193 |   } catch (error) {
+ 194 |     """    console.error('Error calling Gemini API for SEO improvement:', error);
+     :     ^|^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     :      `-- This is the expression part of an expression statement
+ 195 |     throw new Error(`Failed to optimize text for SEO: ${error instanceof Error ? error.message : 'Unknown error'}`);
+ 196 |   }
+ 197 | } 
