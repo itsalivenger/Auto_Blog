@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
     improveForSEO(blogToPublish.content),
     improveTitleForSEO(blogToPublish.title)
   ]);
+  console.log(blogToPublish.title, improvedTitle);
 
   // 3. Determine publish date/time
   const body = await request.json().catch(() => ({})) // Handle empty body
