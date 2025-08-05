@@ -46,8 +46,6 @@ export async function POST(request: NextRequest) {
     improveTitleForSEO(blogToPublish.title)
   ]);
 
-  blogToPublish.title = improvedTitle;
-
   // 3. Determine publish date/time
   const body = await request.json().catch(() => ({})) // Handle empty body
 
@@ -110,7 +108,8 @@ export async function POST(request: NextRequest) {
       html: `
         <p>Dear Ali,</p>
         <p>A new blog post has been successfully published to Blogger:</p>
-        <p><strong>Title:</strong> ${improvedTitle}</p>
+        <p><strong>Original Title:</strong> ${blogToPublish.title}</p>
+        <p><strong>New Title:</strong> ${improvedTitle}</p>
         <p><strong>Blogger Post ID:</strong> ${bloggerResult.id}</p>
         <p><strong>Blogger Post URL:</strong> <a href="${bloggerResult.url}">${bloggerResult.url}</a></p>
         <p><strong>Scheduled For:</strong> ${publishNow ? 'Now' : `${publishDate} ${publishTime}`}</p>
