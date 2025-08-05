@@ -202,7 +202,7 @@ export async function improveTitleForSEO(text: string): Promise<string> {
       throw new Error('GEMINI_API_KEY is not configured');
     }
 
-    const prompt = `Improve the following blog title for better SEO and click-through rates. Make it concise, catchy, and keyword-rich.
+    const prompt = `Improve the following blog title for better SEO and click-through rates. Make it concise, catchy, and keyword-rich. Return only the improved title, and nothing else. Do not include any extra text, options, or explanations.
 Original Title: "${text}"
 Improved Title:`;
     

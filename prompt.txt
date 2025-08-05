@@ -1,8 +1,1 @@
-return data.candidates[0].content.parts[0].text.replace(/#+/g, '');
- 193 |   } catch (error) {
- 194 |     """    console.error('Error calling Gemini API for SEO improvement:', error);
-     :     ^|^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     :      `-- This is the expression part of an expression statement
- 195 |     throw new Error(`Failed to optimize text for SEO: ${error instanceof Error ? error.message : 'Unknown error'}`);
- 196 |   }
- 197 | } 
+Here are a few improved title options, each with a slightly different focus:**Option 1 (Focus on Trump):*** **Trump's Golf Game: Deals & Controversy on the Green****Option 2 (Focus on the deals):*** **Trump's Golf Deals: How He Made Millions on the Fairway****Option 3 (More sensational, potentially higher CTR but may attract less relevant traffic):*** **Trump's Secret Golf Deals: The Shocking Truth Revealed!****Option 4 (More concise and direct):*** **Trump & Golf: Business on the Course**The best option will depend on the actual content of your blog post.  Consider what aspect you want to emphasize most – Trump himself, the business deals, or the more controversial aspects.  All of these options use relevant keywords and are more concise and engaging than the original.
