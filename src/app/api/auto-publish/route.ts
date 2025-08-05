@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { improveForSEO } from '@/lib/ai-utils'
+import { improveForSEO, improveTitleForSEO } from '@/lib/ai-utils' // Updated import
 import { scheduleBloggerPost } from '@/lib/blogger-api'
 import { ObjectId } from 'mongodb'
 import { sendEmail } from '@/lib/email-service'
@@ -40,8 +40,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'No unpublished blogs found.' }, { status: 200 })
   }
 
-  // 2. Improve content for SEO
-  const improvedContent = await improveForSEO(blogToPublish.content)
+  // 2. Improve content and title for SEO
+  const [improvedContent, improvedTitle] = await Promise.all([
+    improveForSEO(blogToPublish.content),
+    improveTitleForSEO(blogToPublish.title)
+  ]);
+
+  blogToPublish.title = improvedTitle;
 
   // 3. Determine publish date/time
   const body = await request.json().catch(() => ({})) // Handle empty body
@@ -66,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   // 4. Publish to Blogger
   const post = {
-    title: blogToPublish.title,
+    title: improvedTitle, // Use the improved title
     content: improvedContent,
     images: blogToPublish.images || [],
   }
@@ -82,6 +87,7 @@ export async function POST(request: NextRequest) {
         published_at: new Date(),
         bloggerPostId: bloggerResult.id,
         bloggerPostUrl: bloggerResult.url,
+        title: improvedTitle, 
       },
     }
   )
@@ -100,11 +106,11 @@ export async function POST(request: NextRequest) {
   try {
     await sendEmail({
       to: process.env.ADMIN_EMAIL || '',
-      subject: `Blog Published: ${blogToPublish.title} (#${publishedBlogsCount})`,
+      subject: `Blog Published: ${improvedTitle} (#${publishedBlogsCount})`,
       html: `
         <p>Dear Ali,</p>
         <p>A new blog post has been successfully published to Blogger:</p>
-        <p><strong>Title:</strong> ${blogToPublish.title}</p>
+        <p><strong>Title:</strong> ${improvedTitle}</p>
         <p><strong>Blogger Post ID:</strong> ${bloggerResult.id}</p>
         <p><strong>Blogger Post URL:</strong> <a href="${bloggerResult.url}">${bloggerResult.url}</a></p>
         <p><strong>Scheduled For:</strong> ${publishNow ? 'Now' : `${publishDate} ${publishTime}`}</p>

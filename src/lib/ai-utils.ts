@@ -191,7 +191,56 @@ ${text}`;
 
     return data.candidates[0].content.parts[0].text.replace(/#+/g, '');
   } catch (error) {
-    console.error('Error calling Gemini API for SEO improvement:', error);
+    """    console.error('Error calling Gemini API for SEO improvement:', error);
     throw new Error(`Failed to optimize text for SEO: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 } 
+
+export async function improveTitleForSEO(text: string): Promise<string> {
+  try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not configured');
+    }
+
+    const prompt = `Improve the following blog title for better SEO and click-through rates. Make it concise, catchy, and keyword-rich.
+Original Title: "${text}"
+Improved Title:`;
+    
+    console.log('Calling Gemini API for title improvement...');
+    
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error response:', errorText);
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error.message || 'Gemini API error');
+    }
+
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+      throw new Error('Invalid response format from Gemini API');
+    }
+
+    return data.candidates[0].content.parts[0].text.replace(/#+/g, '').replace(/"/g, '').trim();
+  } catch (error) {
+    console.error('Error calling Gemini API for title improvement:', error);
+    throw new Error(`Failed to improve title with AI: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}"" 
