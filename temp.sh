@@ -1,0 +1,1 @@
+https://accounts.google.com/o/oauth2/v2/auth?client_id=897990234624-6ruhr77amugs5nig3qgnd4644o7tvlo3.apps.googleusercontent.com&redirect_uri=https://auto-blog-tau.vercel.app/api/oauth&response_type=code&scope=https://www.googleapis.com/auth/blogger&access_type=offline&prompt=consent
