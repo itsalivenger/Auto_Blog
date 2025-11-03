@@ -211,7 +211,10 @@ export async function improveTitleForSEO(text: string): Promise<string> {
       throw new Error('GEMINI_API_KEY is not configured');
     }
 
-    const prompt = `Improve the following blog title for better SEO and click-through rates. Make it concise, catchy, and keyword-rich. Return only the improved title, and nothing else. Do not include any extra text, options, or explanations.
+    const prompt = `Improve the following blog title for better SEO and click-through rates. 
+Make it concise, catchy, and keyword-rich. 
+Return only the improved title — no explanations, options, or extra text.
+
 Original Title: "${text}"
 Improved Title:`;
 
@@ -241,21 +244,24 @@ Improved Title:`;
       throw new Error(data.error.message || 'Gemini API error');
     }
 
-    // Try multiple possible response formats
-    let improvedTitle =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      data.candidates?.[0]?.output_text ||
-      data.text ||
+    // ✅ Handle multiple valid Gemini response formats
+    const improvedTitle =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ??
+      data.candidates?.[0]?.output_text ??
+      data.text ??
+      data.output ??
       null;
 
-    if (!improvedTitle) {
-      console.error('Unexpected Gemini response:', JSON.stringify(data, null, 2));
+    if (!improvedTitle || typeof improvedTitle !== 'string') {
+      console.error('Unexpected Gemini response format:', JSON.stringify(data, null, 2));
       throw new Error('Invalid response format from Gemini API');
     }
 
     return improvedTitle.replace(/#+/g, '').replace(/"/g, '').trim();
   } catch (error) {
     console.error('Error calling Gemini API for title improvement:', error);
-    throw new Error(`Failed to improve title with AI: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to improve title with AI: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
