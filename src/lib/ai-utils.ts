@@ -224,9 +224,7 @@ Improved Title:`;
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{
-            text: prompt
-          }]
+          parts: [{ text: prompt }]
         }]
       })
     });
@@ -243,14 +241,21 @@ Improved Title:`;
       throw new Error(data.error.message || 'Gemini API error');
     }
 
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
-      console.log('here');
+    // Try multiple possible response formats
+    let improvedTitle =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data.candidates?.[0]?.output_text ||
+      data.text ||
+      null;
+
+    if (!improvedTitle) {
+      console.error('Unexpected Gemini response:', JSON.stringify(data, null, 2));
       throw new Error('Invalid response format from Gemini API');
     }
 
-    return data.candidates[0].content.parts[0].text.replace(/#+/g, '').replace(/"/g, '').trim();
+    return improvedTitle.replace(/#+/g, '').replace(/"/g, '').trim();
   } catch (error) {
     console.error('Error calling Gemini API for title improvement:', error);
     throw new Error(`Failed to improve title with AI: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-} "" 
+}
